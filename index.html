@@ -1,85 +1,22 @@
 <!doctype html>
-// Notify upcoming sessions within 24h
-notifyUpcoming(result);
-}
-
-
-function renderCalendar(schedule){
-const cal = $('calendar'); cal.innerHTML='';
-const dates = Object.keys(schedule).sort();
-if(dates.length===0){$('scheduleSection').style.display='none';alert('No sessions generated. Check dates and intervals.');return}
-$('scheduleSection').style.display='block';
-$('sessionsSection').style.display='block';
-dates.forEach(d=>{
-const card = document.createElement('div');card.className='day-card';
-const total = schedule[d].reduce((s,e)=>s+ (e.allocatedHours||0),0);
-card.innerHTML = `<div style='display:flex;justify-content:space-between;align-items:center'><div><strong>${d}</strong><div class='muted small'>${schedule[d].length} session(s)</div></div><div style='text-align:right'><span class='badge'>${total} h</span><div style='height:8px'></div><button data-date='${d}' class='viewDay'>View</button></div></div>`;
-cal.appendChild(card);
-});
-document.querySelectorAll('.viewDay').forEach(b=>b.onclick=e=>showSessionsForDate(b.dataset.date));
-}
-
-
-function showSessionsForDate(date){
-const schedule = JSON.parse(localStorage.getItem('srp_schedule') || '{}');
-const arr = schedule[date] || [];
-const list = $('sessionsList');
-if(arr.length===0){list.innerHTML = `<div class='muted'>No sessions for ${date}</div>`; return}
-const wrap = document.createElement('div');
-arr.forEach(s=>{
-const el = document.createElement('div'); el.style.display='flex'; el.style.justifyContent='space-between'; el.style.alignItems='center'; el.style.gap='12px'; el.style.padding='8px 0';
-el.innerHTML = `<div><strong>${escapeHtml(s.subject)}</strong><div class='muted small'>${s.type} • Priority: ${s.priority}</div></div><div style='text-align:right'><div>${s.allocatedHours || 0} h</div><div style='height:6px'></div><button class='doneBtn'>Mark done</button></div>`;
-wrap.appendChild(el);
-});
-list.innerHTML=''; list.appendChild(wrap);
-// attach done handlers
-document.querySelectorAll('.doneBtn').forEach((b,i)=>b.onclick=()=>{alert('Nice — marked done.\nConsider reducing this session in future schedules.');});
-}
-
-
-function exportCSV(){
-const schedule = JSON.parse(localStorage.getItem('srp_schedule') || '{}');
-const rows = [['date','subject','type','hours','priority']];
-Object.keys(schedule).sort().forEach(d=>{
-schedule[d].forEach(s=>rows.push([d, s.subject, s.type, s.allocatedHours||'', s.priority]));
-});
-const csv = rows.map(r=>r.map(c=>`"${(''+c).replace(/"/g,'""')}"`).join(',')).join('\n');
-const blob = new Blob([csv], {type:'text/csv'});
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a'); a.href=url; a.download='revision-schedule.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
-
-
-// Simple notifications for upcoming sessions within 24 hours
-function notifyUpcoming(schedule){
-if(!('Notification' in window)) return;
-const upcoming = [];
-const now = new Date();
-const limit = new Date(now.getTime() + 24*60*60*1000);
-Object.keys(schedule).forEach(d=>{
-const dt = new Date(d+'T09:00:00'); // notify at 9am of that day
-if(dt>now && dt<=limit){
-schedule[d].forEach(s=>upcoming.push({date:d,subject:s.subject,type:s.type}));
-}
-});
-if(upcoming.length===0) return;
-if(Notification.permission === 'granted'){
-const text = upcoming.slice(0,4).map(u=>`${u.date}: ${u.subject} (${u.type})`).join('\n');
-new Notification('Upcoming revision sessions', {body:text});
-} else if(Notification.permission !== 'denied'){
-Notification.requestPermission().then(p=>{ if(p==='granted') notifyUpcoming(schedule); });
-}
-}
-
-
-// On load: restore UI state
-(function init(){
-refreshSubjectsUI();
-const sched = localStorage.getItem('srp_schedule');
-if(sched){renderCalendar(JSON.parse(sched));}
-})();
-
-
-</script>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Revision Planner</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f7fafc; color:#0f172a; padding:32px; }
+    .card { max-width:720px; margin:0 auto; background:#fff; padding:24px; border-radius:10px; box-shadow:0 6px 18px rgba(2,6,23,0.06); }
+    h1 { margin-top:0; font-size:20px; }
+    p { line-height:1.6; margin:12px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Smart Revision Planner</h1>
+    <p>
+      The <strong>Smart Revision Planner</strong> is a web-based application that helps students prepare more effectively for exams by creating a structured and personalized study schedule. By simply entering their subjects and exam dates, students receive an automatically generated revision plan built on the principle of spaced repetition, ensuring better knowledge retention. The application also provides timely reminders to highlight the best moments for revision, helping students stay organized, consistent, and confident in their preparation.
+    </p>
+  </div>
 </body>
 </html>
